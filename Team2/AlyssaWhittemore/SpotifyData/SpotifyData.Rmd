@@ -1,0 +1,134 @@
+---
+title: "Spotify Data"
+author: "Team 2"
+date: "6/7/2020"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE, echo = TRUE}
+library(tidyverse)
+setwd("/cloud/project/Day4_FinalProject/SpotifyData")
+musicdata <- read_csv("data.csv")
+```
+
+
+```{r echo = TRUE, message = FALSE}
+musicdata_2010s <- musicdata %>% 
+  filter(year %in% 2010:2019) %>% 
+  select(-X1, -id)
+```
+
+Something that has become much more popular in music lately is having explicit lyrics. For example, here is a bar chart showing the percentage of explicit songs in the data by each decade. 
+
+
+```{r echo = TRUE, message = FALSE}
+musicdata$year <- factor(musicdata$year, ordered = is.ordered(musicdata$year))
+musicdata_bydecade <- musicdata
+musicdata_bydecade$decade <- paste0(substr(musicdata_bydecade$year, start = 1, stop = 3),0)
+musicdata_bydecade <- musicdata_bydecade %>% select(-X1)
+musicdata_bydecade %>% 
+  group_by(decade) %>% 
+    summarise(explicit_ratio = mean(explicit))  %>% 
+  ggplot() +
+  geom_col(mapping = aes(x = decade, y = explicit_ratio * 100), fill = "darkblue") +
+  labs(title = "Percent of Songs that are Explicit by Decade", x = "Decade", y = "Percent of Songs that are Explicit")
+```
+
+Above you can see that explicit songs were very rare, up until about the 1990s, where more than 10% of the songs were explicit. As we look at more current music, say in the 2010s, more than a quarter of the music from the data was explicit. The data shows that more than 40% of music from 2020 was explicit as well. Something to keep in mind here is that we have barely entered the 2020 decade, so there isn't much data in this decade for us to look at. 
+
+
+```{r echo = TRUE, message = FALSE}
+musicdata_2010s$year <- factor(musicdata_2010s$year, levels = c("2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019"))
+musicdata_2010s %>% 
+  group_by(year) %>% 
+  summarise(explicit_ratio = mean(explicit))  %>% 
+  ggplot() +
+  geom_col(mapping = aes(x = year, y = explicit_ratio * 100), fill = "darkblue") +
+  labs(title = "Percent of Songs that are Explicit by Year in the 2010s", x = "Year", y = "Percent of Songs that are Explicit")
+```
+
+If we focus specifically on the 2010 decade, we can see that explicit songs became much more prevalent as the decade went on. Something here to notice is that there was actually a peak in 2018, where more than 45% of the songs were explicit. 
+
+
+<!-- #```{r echo = TRUE, message = FALSE} -->
+<!-- #musicdata_2010s %>%  -->
+<!-- #  ggplot() + -->
+<!-- #  geom_boxplot(mapping = aes(x = explicit, y = loudness, group = explicit)) -->
+<!-- #``` -->
+
+<!-- #```{r echo = TRUE, message = FALSE} -->
+<!-- #musicdata_2010s %>%  -->
+<!-- #  ggplot() + -->
+<!-- #  geom_boxplot(mapping = aes(x = explicit, y = popularity, group = explicit)) -->
+<!-- #``` -->
+
+
+
+
+
+
+
+```{r echo = TRUE, message = FALSE}
+musicdata$explicityn <- factor(musicdata$explicit, labels = c("0","1"))
+musicdata_explicit <- musicdata %>% 
+  mutate(explicityn = fct_recode(explicityn, "Yes" = "1", "No" = "0"))
+musicdata_explicit %>% 
+  group_by(year, explicityn) %>% 
+  summarise(avg_energy = mean(energy)) %>% 
+  ungroup() %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = year, y = avg_energy, group = explicityn, color = explicityn)) +
+  scale_x_discrete(breaks=seq(1920, 2020, 10)) +
+  labs(title = "Average Song Energy by Year", subtitle = "Grouped by whether the song is explicit or not", x = "Year", y = "Energy", color = "Explicit")
+```
+
+Something interesting to look at is the energy of songs throughout the years. Remember that there weren't very many explicit songs before 1990, but after about 1975, the average energy (for each year) of explicit songs has been higher than non-explicit songs. In fact, we can even see that the energy for both explicit and non-explicit songs are tending to be much higher in the more current music. 
+
+
+
+```{r echo = TRUE, message = FALSE}
+musicdata$explicityn <- factor(musicdata$explicit, labels = c("0","1"))
+musicdata_explicit <- musicdata %>% 
+  mutate(explicityn = fct_recode(explicityn, "Yes" = "1", "No" = "0"))
+musicdata_explicit %>% 
+  group_by(year, explicityn) %>% 
+  summarise(avg_pop = mean(popularity)) %>% 
+  ungroup() %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = year, y = avg_pop, group = explicityn, color = explicityn)) +
+  scale_x_discrete(breaks=seq(1920, 2020, 10)) +
+  labs(title = "Average Song Popularity by Year", subtitle = "Grouped by whether the song is explicit or not", x = "Year", y = "Popularity", color = "Explicit")
+```
+
+Since explicit music has become more prevalent, we can notice that a song being explicit or not does not have a large affect on the popularity of the music. One might expect that non-explicit songs would be more popular than explicit songs, since they are more "family-" or "radio-friendly". This, however, does not seem to be the case. 
+
+
+
+<!-- #```{r} -->
+<!-- #musicdata_bydecade %>%  -->
+<!-- #  ggplot() + -->
+<!-- #  geom_point(mapping = aes( x = energy, y = popularity, color = decade ), alpha = 0.1) -->
+<!-- #``` -->
+
+
+<!-- # ```{r echo = TRUE, message = FALSE} -->
+<!-- # musicdata_2010s %>%  -->
+<!-- #   ggplot() +  -->
+<!-- #   geom_smooth( mapping = aes(x = tempo, y = popularity, color = year)) -->
+<!-- # ``` -->
+
+
+```{r}
+musicdata %>% 
+  group_by(year) %>% 
+  summarise(avg_tempo = mean(tempo)) %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = year, y = avg_tempo))
+```
+
+
+Introduction:
+
+How can we tell how music is changing? What types of music trends are happening? These are the questions for which we wanted to find answers. It would be fairly difficult analyzing music by listening to thousands (or even hundreds) of songs, but luckily for us, Spotify shares lots of data. Yamaç Eren Ay posted a [data set](https://www.kaggle.com/yamaerenay/spotify-dataset-19212020-160k-tracks) on the website Kaggel, which included data for more than 160 thousand songs all from Spotify. This data includes songs from 1921 up to 2020, and looks at a number of different variables for each song. Our goal is to analyze how these factors have changed for music since 1921 with an emphasis on how music has been changing in the last decade. 
